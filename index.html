@@ -223,12 +223,6 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
   <!-- SECTION: js hint -->
   <div class="js-hint" id="jsHint">当前为静态预览：日期和示例安排已固定显示。若点击日历没有反应，请把本文件保存到手机或电脑后用浏览器打开，即可正常点选日期、添加和勾选任务。</div>
 
-  <!-- SECTION: dirty bar -->
-  <div class="dirty-bar" id="dirtyBar" hidden>
-    <span>有新记录还没保存进文件。手机清理可能清掉浏览器数据，点右侧按钮保存成文件最保险。</span>
-    <button type="button" id="dirtySaveBtn">保存到文件</button>
-  </div>
-
   <!-- SECTION: stats -->
   <section class="stats">
     <div class="stat-card hl">
@@ -527,7 +521,7 @@ function load(){
 }
 function updateDirty(){
   var el = document.getElementById('dirtyBar');
-  if(el) el.hidden = cloudConfigured() || !(state.tasks.length > 0 && lastChange > lastFileSave);
+  if(el) el.parentNode.removeChild(el);
 }
 /* SECTION: save to file */
 function saveToFile(){
@@ -796,7 +790,6 @@ document.getElementById('addForm').addEventListener('submit', function(e){
 
 /* SECTION: backup tools */
 document.getElementById('exportBtn').addEventListener('click', saveToFile);
-document.getElementById('dirtySaveBtn').addEventListener('click', saveToFile);
 document.getElementById('importBtn').addEventListener('click', function(){
   document.getElementById('importFile').click();
 });
