@@ -828,6 +828,40 @@ document.getElementById('resetBtn').addEventListener('click', function(){
   }
 });
 
+/* SECTION: first connect */
+function firstConnect(){
+  if(!cloudConfigured()){ setSync('云同步未连接', ''); return; }
+  setSync('同步中…', '');
+  var base = cloud.url.replace(/\/+$/, '');
+  fetch(base + '/rest/v1/work_calendar?board=eq.' + encodeURIComponent(cloud.board) + '&select=data,updated_at', {
+    headers: cloudHeaders()
+  }).then(function(r){
+    if(!r.ok) throw new Error('http ' + r.status);
+    return r.json();
+  }).then(function(rows){
+    var row = rows && rows[0];
+    if(row && Array.isArray(row.data)){
+      state.tasks = row.data;
+      lastChange = row.updated_at || 0;
+      persist(); renderAll(); updateDirty();
+      setSync('已同步 · 云端更新', 'ok');
+      return;
+    }
+    var stamp = lastChange || Date.now();
+    return fetch(base + '/rest/v1/work_calendar', {
+      method: 'POST',
+      headers: cloudHeaders({ 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates,return=minimal' }),
+      body: JSON.stringify({ board: cloud.board, data: state.tasks, updated_at: stamp })
+    }).then(function(r){
+      if(!r.ok) throw new Error('http ' + r.status);
+      lastChange = stamp;
+      setSync('已同步 · ' + new Date().toTimeString().slice(0,5), 'ok');
+    });
+  }).catch(function(){
+    setSync('云端连不上，暂存本机', 'err');
+  });
+}
+
 /* SECTION: cloud settings */
 document.getElementById('cloudBtn').addEventListener('click', function(){
   document.getElementById('cloudUrl').value = cloud.url || '';
@@ -856,8 +890,8 @@ document.getElementById('cloudSaveBtn').addEventListener('click', function(){
   cloud = { url: u, key: k, board: b };
   persistCloud();
   document.getElementById('cloudModal').hidden = true;
-  toast('云同步已连接，正在同步');
-  syncNow();
+  toast('云同步已连接，正在拉取云端数据');
+  firstConnect();
 });
 
 /* SECTION: init */
